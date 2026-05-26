@@ -1,24 +1,26 @@
 workflows:
-  ios-simulator-build:
-    name: iOS Simulator Build (No Signing)
+  ios-device-build:
+    name: iOS Device Build (Unsigned IPA)
     max_build_duration: 60
     environment:
       xcode: latest
     scripts:
-      - name: Build for iOS Simulator
+      - name: Build for iOS Device (Unsigned)
         script: |
           xcodebuild \
             -project TicTacToe.xcodeproj \
             -scheme TicTacToe \
-            -sdk iphonesimulator \
-            -destination 'generic/platform=iOS Simulator' \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
             -configuration Release \
             CODE_SIGNING_ALLOWED=NO \
             CONFIGURATION_BUILD_DIR=$CM_BUILD_DIR/output \
             clean build
-      - name: Package .app into zip
+      - name: Package into unsigned IPA
         script: |
-          cd $CM_BUILD_DIR/output
-          zip -r TicTacToe-Simulator.zip TicTacToe.app
+          mkdir -p $CM_BUILD_DIR/ipa/Payload
+          cp -r $CM_BUILD_DIR/output/TicTacToe.app $CM_BUILD_DIR/ipa/Payload/
+          cd $CM_BUILD_DIR/ipa
+          zip -r TicTacToe-Unsigned.ipa Payload
     artifacts:
-      - $CM_BUILD_DIR/output/TicTacToe-Simulator.zip
+      - $CM_BUILD_DIR/ipa/TicTacToe-Unsigned.ipa
