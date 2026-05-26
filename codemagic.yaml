@@ -1,0 +1,24 @@
+workflows:
+  ios-simulator-build:
+    name: iOS Simulator Build (No Signing)
+    max_build_duration: 60
+    environment:
+      xcode: 15.4
+    scripts:
+      - name: Build for iOS Simulator
+        script: |
+          xcodebuild \
+            -project TicTacToe.xcodeproj \
+            -scheme TicTacToe \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -configuration Release \
+            CODE_SIGNING_ALLOWED=NO \
+            CONFIGURATION_BUILD_DIR=$CM_BUILD_DIR/output \
+            clean build
+      - name: Package .app into zip
+        script: |
+          cd $CM_BUILD_DIR/output
+          zip -r TicTacToe-Simulator.zip TicTacToe.app
+    artifacts:
+      - $CM_BUILD_DIR/output/TicTacToe-Simulator.zip
