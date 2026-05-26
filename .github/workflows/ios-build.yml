@@ -1,0 +1,80 @@
+name: Build iOS TicTacToe
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch: # Allows you to trigger it manually from GitHub
+
+jobs:
+  build:
+    name: Build & Test (Simulator)
+    runs-on: macos-14 # Uses Apple Silicon Mac with Xcode 15+
+
+    steps:
+      # 1. Check out your repo
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Show available Xcode versions (useful for debugging)
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_15.4.app
+          xcodebuild -version
+
+      # 3. Build for simulator (no signing needed)
+      - name: Build for iOS Simulator
+        run: |
+          xcodebuild \
+            -project TicTacToe.xcodeproj \
+            -scheme TicTacToe \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            clean build \
+            | xcpretty || true
+
+      # 4. (Optional) Build a real .ipa for device install
+      #    Uncomment this step ONLY after you add signing secrets (see README)
+      #
+      # - name: Archive for device (.ipa)
+      #   run: |
+      #     xcodebuild \
+      #       -project TicTacToe.xcodeproj \
+      #       -scheme TicTacToe \
+      #       -sdk iphoneos \
+      #       -configuration Release \
+      #       -archivePath $RUNNER_TEMP/TicTacToe.xcarchive \
+      #       CODE_SIGN_STYLE=Manual \
+      #       PROVISIONING_PROFILE_SPECIFIER="${{ secrets.PROVISIONING_PROFILE_NAME }}" \
+      #       CODE_SIGN_IDENTITY="iPhone Distribution" \
+      #       archive
+      #
+      #     xcodebuild \
+      #       -exportArchive \
+      #       -archivePath $RUNNER_TEMP/TicTacToe.xcarchive \
+      #       -exportOptionsPlist ExportOptions.plist \
+      #       -exportPath $RUNNER_TEMP/ipa
+      #
+      # - name: Upload .ipa artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: TicTacToe-ipa
+      #     path: ${{ runner.temp }}/ipa/*.ipa
+
+  # Uncomment the block below if you want to run unit tests
+  # test:
+  #   name: Run Tests
+  #   runs-on: macos-14
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Run tests
+  #       run: |
+  #         xcodebuild test \
+  #           -project TicTacToe.xcodeproj \
+  #           -scheme TicTacToe \
+  #           -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+  #           CODE_SIGNING_ALLOWED=NO \
+  #           | xcpretty
